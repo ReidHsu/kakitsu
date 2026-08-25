@@ -31,6 +31,7 @@ export function RecipeImportPage() {
   const [llmOutput, setLlmOutput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [decodedNotice, setDecodedNotice] = useState<string | null>(null)
 
   const genericPrompt = useMemo(buildGenericPrompt, [])
 
@@ -38,6 +39,17 @@ export function RecipeImportPage() {
     recipeInput.trim()
       ? buildImportPrompt(recipeInput.trim())
       : genericPrompt
+
+  /** 目前內容看起來仍是 URL-encoded 嗎？ */
+  const looksEncoded = tryDecodeUrlEncoded(llmOutput) !== llmOutput
+
+  const handleDecodeCurrent = () => {
+    const decoded = tryDecodeUrlEncoded(llmOutput)
+    if (decoded !== llmOutput) {
+      setLlmOutput(decoded)
+      setDecodedNotice('✨ 已自動解碼：來源是 URL-encoded，已還原成正常文字')
+    }
+  }
 
   const handleCopyGeneric = async () => {
     const ok = await copyText(genericPrompt)
@@ -129,10 +141,26 @@ export function RecipeImportPage() {
                 if (decoded !== raw) {
                   e.preventDefault()
                   setLlmOutput(decoded)
+                  setDecodedNotice('✨ 已自動解碼：來源是 URL-encoded，已還原成正常文字')
                 }
               }}
               placeholder={'NAME: 番茄義大利麵\nSERVINGS: 2\nINGREDIENTS:\n- 義大利麵 | 200 | g\n...'}
             />
+            {decodedNotice ? (
+              <p className="mt-1.5 text-sm text-green-700 dark:text-green-400">{decodedNotice}</p>
+            ) : null}
+            {looksEncoded ? (
+              <p className="mt-1.5 text-sm text-amber-700 dark:text-amber-400">
+                看起來仍是 URL-encoded，可點「手動解碼」還原：
+                <button
+                  type="button"
+                  className="ml-1 font-semibold underline"
+                  onClick={handleDecodeCurrent}
+                >
+                  🪄 手動解碼
+                </button>
+              </p>
+            ) : null}
           </div>
           <Button onClick={handleParse} disabled={!llmOutput.trim()}>
             ➡️ 解析並填到編輯器
