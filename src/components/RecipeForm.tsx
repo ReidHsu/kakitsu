@@ -223,45 +223,52 @@ export function RecipeForm({
         <SectionTitle>食材</SectionTitle>
         <div className="flex flex-col gap-2">
           {draft.ingredients.map((ing, idx) => (
-            <div key={ing.id} className="flex items-center gap-2">
-              <span className="w-5 shrink-0 text-center text-sm text-gray-400">
+            <div
+              key={ing.id}
+              className="flex min-w-0 items-start gap-2 rounded-xl border border-gray-200 p-2 dark:border-gray-700"
+            >
+              <span className="w-5 shrink-0 pt-2 text-center text-sm text-gray-400">
                 {idx + 1}
               </span>
-              <TextInput
-                value={ing.name}
-                onChange={(e) => updateIngredient(ing.id, { name: e.target.value })}
-                placeholder="名稱"
-                className="min-w-0 flex-1"
-              />
-              <TextInput
-                value={ing.amount === 0 ? '' : String(ing.amount)}
-                onChange={(e) =>
-                  updateIngredient(ing.id, { amount: parseFloat(e.target.value) || 0 })
-                }
-                placeholder="份量"
-                inputMode="decimal"
-                className="w-20 shrink-0"
-              />
-              <Select
-                value={ing.unit}
-                onChange={(e) => updateIngredient(ing.id, { unit: e.target.value })}
-                className="w-20 shrink-0"
-              >
-                <option value="">—</option>
-                {UNIT_OPTIONS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </Select>
-              <button
-                type="button"
-                aria-label={`刪除食材 ${ing.name || idx + 1}`}
-                className="h-9 w-9 shrink-0 rounded-full text-gray-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
-                onClick={() => removeIngredient(ing.id)}
-              >
-                ✕
-              </button>
+              <div className="min-w-0 flex-1">
+                <TextInput
+                  value={ing.name}
+                  onChange={(e) => updateIngredient(ing.id, { name: e.target.value })}
+                  placeholder="食材名稱"
+                  className="!w-full"
+                />
+                <div className="mt-2 flex min-w-0 items-center gap-2">
+                  <TextInput
+                    value={ing.amount === 0 ? '' : String(ing.amount)}
+                    onChange={(e) =>
+                      updateIngredient(ing.id, { amount: parseFloat(e.target.value) || 0 })
+                    }
+                    placeholder="份量"
+                    inputMode="decimal"
+                    className="!w-24 shrink-0"
+                  />
+                  <Select
+                    value={ing.unit}
+                    onChange={(e) => updateIngredient(ing.id, { unit: e.target.value })}
+                    className="!w-24 shrink-0"
+                  >
+                    <option value="">單位</option>
+                    {UNIT_OPTIONS.map((u) => (
+                      <option key={u} value={u}>
+                        {u || '無'}
+                      </option>
+                    ))}
+                  </Select>
+                  <button
+                    type="button"
+                    aria-label={`刪除食材 ${ing.name || idx + 1}`}
+                    className="ml-auto h-9 w-9 shrink-0 rounded-full text-gray-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30"
+                    onClick={() => removeIngredient(ing.id)}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
             </div>
           ))}
         </div>
