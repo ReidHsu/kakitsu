@@ -66,6 +66,10 @@ src/
 └── hooks/        # useTheme
 ```
 
+## 授權
+
+[MIT](./LICENSE) © 2026 ReidHsu
+
 ## 路線圖
 
 見 `plan.md`。目前完成第一階段 MVP（Phase 1–9）與測試 / CI（Phase 10）。
