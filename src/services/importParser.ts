@@ -43,30 +43,40 @@ function unwrapTransportQuotes(text: string): string {
 
 /**
  * 固定匯入格式範本（也是 prompt 給 LLM 看的範例）。
- * 使用英文欄位名，減少 LLM 產出差異；但 parser 也相容中文欄位名。
+ * 使用不含冒號的欄位格式，避免手機把 NAME: 誤判為 URL scheme；parser 仍相容舊格式。
  */
-export const IMPORT_FORMAT_TEMPLATE = `NAME: 食譜名稱
-DESCRIPTION: 一句話描述
-SERVINGS: 2
-TAGS: 標籤1, 標籤2
-INGREDIENTS:
+export const IMPORT_FORMAT_TEMPLATE = `[KAKITSU_RECIPE]
+NAME = 食譜名稱
+DESCRIPTION = 一句話描述
+SERVINGS = 2
+TAGS = 標籤1, 標籤2
+
+[INGREDIENTS]
 - 食材名稱 | 份量 | 單位
 - 食材名稱 | 份量 | 單位
-STEPS:
+
+[STEPS]
 1. 步驟內容
 2. 步驟內容
-NOTES: 備註`
+
+[NOTES]
+備註
+[/KAKITSU_RECIPE]`
 
 const GENERIC_PROMPT = `你是「食譜整理助手」。之後我貼給你一份食譜文字或一道菜的名稱／描述時，請只回覆成下列固定格式，不要前言、不要說明、不要程式碼區塊。
+
+重要：請完整保留 [KAKITSU_RECIPE] 與 [/KAKITSU_RECIPE] 標記；不要把固定格式改成 JSON、Markdown 表格或其他格式。
 
 固定格式範例：
 ${IMPORT_FORMAT_TEMPLATE}
 
 規則：
-- NAME 必填，其他欄位沒有資料就省略該行。
+- NAME 必填，使用「欄位 = 內容」，不要使用冒號。
+- DESCRIPTION、SERVINGS、TAGS 沒有資料就省略該行。
 - INGREDIENTS 每行是「食材名稱 | 份量 | 單位」。份量用數字；單位用 g、kg、ml、l、tbsp、tsp、杯、顆、瓣、根、片、塊、條、包、個、隻 等，真的沒有單位就留空。
 - SERVINGS 要是整數，食材份量要對應到這個份量。
 - STEPS 用數字編號，每行一個步驟。
+- NOTES 沒有資料就省略整個區塊。
 - 若我給的是菜名或描述而沒有現成食譜，請設計一份合理的食譜，輸出同樣格式。`
 
 /** 可重複使用的通用 prompt（使用者自己貼給 LLM） */
@@ -90,6 +100,10 @@ const SECTION_ALIASES: Record<string, string[]> = {
   NOTES: ['notes', '備註', '筆記', '小貼士'],
 }
 
+const SAFE_FIELD_RE = /^([a-z][a-z_]*)\s*=\s*(.*)$/i
+const SAFE_SECTION_RE = /^\[([^\]]+)\]$/
+const SAFE_END_RE = /^\[\/KAKITSU_RECIPE\]$/i
+
 const ALIAS_ENTRIES = Object.entries(SECTION_ALIASES).flatMap(([key, aliases]) =>
   aliases.map((a) => ({ key, re: new RegExp(`^${escapeRegex(a)}\\s*[:：]\\s*(.*)$`, 'i') })),
 )
@@ -106,6 +120,23 @@ function escapeRegex(s: string): string {
 }
 
 function classify(line: string): ClassifiedLine | null {
+  const safeField = line.match(SAFE_FIELD_RE)
+  if (safeField) {
+    const alias = safeField[1].toLowerCase()
+    const entry = ALIAS_ENTRIES.find(({ re }) => re.test(`${alias}:`))
+    if (entry) return { key: entry.key, value: safeField[2].trim(), isSection: false }
+  }
+
+  const safeSection = line.match(SAFE_SECTION_RE)
+  if (safeSection) {
+    const alias = safeSection[1].toLowerCase()
+    if (alias === 'kakitsu_recipe') return null
+    const entry = Object.entries(SECTION_ALIASES).find(([, aliases]) =>
+      aliases.some((item) => item.toLowerCase() === alias),
+    )
+    if (entry) return { key: entry[0], value: '', isSection: true }
+  }
+
   for (const { key, re } of ALIAS_ENTRIES) {
     const m = line.match(re)
     if (m) return { key, value: m[1].trim(), isSection: m[1].trim() === '' }
@@ -202,15 +233,20 @@ export function parseRecipeText(text: string): RecipeDraft {
     tags: [],
   }
 
-  let section: 'ingredients' | 'steps' | null = null
+  let section: 'ingredients' | 'steps' | 'notes' | null = null
 
   for (const line of lines) {
+    if (SAFE_END_RE.test(line)) {
+      section = null
+      break
+    }
+
     const cls = classify(line)
 
     if (cls) {
       if (cls.isSection) {
         // 進入 section（INGREDIENTS: / STEPS:）
-        section = cls.key === 'INGREDIENTS' ? 'ingredients' : cls.key === 'STEPS' ? 'steps' : null
+        section = cls.key === 'INGREDIENTS' ? 'ingredients' : cls.key === 'STEPS' ? 'steps' : cls.key === 'NOTES' ? 'notes' : null
         continue
       }
       // 內文直接跟在欄位名後面
@@ -263,6 +299,10 @@ export function parseRecipeText(text: string): RecipeDraft {
     if (section === 'steps') {
       const step = parseStepLine(line)
       if (step) draft.steps.push(step)
+      continue
+    }
+    if (section === 'notes') {
+      draft.notes = draft.notes ? `${draft.notes}\n${line}` : line
       continue
     }
     // 其他未知行：忽略（容錯）

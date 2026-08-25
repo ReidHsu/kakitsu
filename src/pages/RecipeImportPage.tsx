@@ -144,7 +144,7 @@ export function RecipeImportPage() {
                   setDecodedNotice('✨ 已自動解碼：來源是 URL-encoded，已還原成正常文字')
                 }
               }}
-              placeholder={'NAME: 番茄義大利麵\nSERVINGS: 2\nINGREDIENTS:\n- 義大利麵 | 200 | g\n...'}
+              placeholder={'[KAKITSU_RECIPE]\nNAME = 番茄義大利麵\nSERVINGS = 2\n[INGREDIENTS]\n- 義大利麵 | 200 | g\n...'}
             />
             {decodedNotice ? (
               <p className="mt-1.5 text-sm text-green-700 dark:text-green-400">{decodedNotice}</p>

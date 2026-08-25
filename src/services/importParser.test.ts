@@ -26,19 +26,23 @@ describe('tryDecodeUrlEncoded', () => {
 })
 
 describe('parseRecipeText', () => {
-  it('解析完整的固定格式', () => {
-    const text = `NAME: 番茄義大利麵
-DESCRIPTION: 經典家常麵
-SERVINGS: 2
-TAGS: 義大利, 快速
-INGREDIENTS:
+  it('解析安全固定格式', () => {
+    const text = `[KAKITSU_RECIPE]
+NAME = 番茄義大利麵
+DESCRIPTION = 經典家常麵
+SERVINGS = 2
+TAGS = 義大利, 快速
+
+[INGREDIENTS]
 - 義大利麵 | 200 | g
 - 番茄 | 2 | 顆
 - 橄欖油 | 1 | tbsp
-STEPS:
+[STEPS]
 1. 煮麵
 2. 拌番茄
-NOTES: 加點羅勒更香`
+[NOTES]
+加點羅勒更香
+[/KAKITSU_RECIPE]`
 
     const draft = parseRecipeText(text)
     expect(draft.name).toBe('番茄義大利麵')
@@ -53,6 +57,12 @@ NOTES: 加點羅勒更香`
     expect(draft.steps[0].order).toBe(0)
     expect(draft.steps[1].order).toBe(1)
     expect(draft.notes).toBe('加點羅勒更香')
+  })
+
+  it('仍相容舊版冒號格式', () => {
+    const draft = parseRecipeText('NAME: 舊格式\nSERVINGS: 2\nINGREDIENTS:\n- 麵 | 100 | g')
+    expect(draft.name).toBe('舊格式')
+    expect(draft.ingredients[0].name).toBe('麵')
   })
 
   it('相容中文欄位名與「食材：」內文形式', () => {
@@ -113,7 +123,7 @@ describe('buildGenericPrompt', () => {
   it('包含固定格式與規則', () => {
     const prompt = buildGenericPrompt()
     expect(prompt).toContain('固定格式範例')
-    expect(prompt).toContain('INGREDIENTS:')
+    expect(prompt).toContain('[INGREDIENTS]')
     expect(prompt).toContain('食譜整理助手')
   })
 })
