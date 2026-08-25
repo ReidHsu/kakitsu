@@ -6,6 +6,7 @@ import {
   buildImportPrompt,
   IMPORT_DRAFT_KEY,
   parseRecipeText,
+  tryDecodeUrlEncoded,
 } from '../services/importParser'
 
 async function copyText(text: string): Promise<boolean> {
@@ -121,6 +122,15 @@ export function RecipeImportPage() {
               rows={8}
               value={llmOutput}
               onChange={(e) => setLlmOutput(e.target.value)}
+              onPaste={(e) => {
+                // 手機 / 部分平台複製出來是 URL-encoded（%20%E6…），貼上時直接解碼還原
+                const raw = e.clipboardData.getData('text/plain')
+                const decoded = tryDecodeUrlEncoded(raw)
+                if (decoded !== raw) {
+                  e.preventDefault()
+                  setLlmOutput(decoded)
+                }
+              }}
               placeholder={'NAME: 番茄義大利麵\nSERVINGS: 2\nINGREDIENTS:\n- 義大利麵 | 200 | g\n...'}
             />
           </div>

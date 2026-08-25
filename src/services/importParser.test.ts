@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import { buildGenericPrompt, parseRecipeText } from './importParser'
+import { buildGenericPrompt, parseRecipeText, tryDecodeUrlEncoded } from './importParser'
+
+describe('tryDecodeUrlEncoded', () => {
+  it('解碼 URL-encoded 內容', () => {
+    expect(tryDecodeUrlEncoded('NAME%3A%20%E6%B9%AF')).toBe('NAME: 湯')
+  })
+  it('一般文字原樣回傳（含字面 % 百分比）', () => {
+    expect(tryDecodeUrlEncoded('5% 的鹽水')).toBe('5% 的鹽水')
+  })
+  it('解碼失敗時原樣回傳', () => {
+    expect(tryDecodeUrlEncoded('100%zz')).toBe('100%zz')
+  })
+  it('parseRecipeText 自動解碼 URL-encoded 的食譜', () => {
+    const draft = parseRecipeText(
+      'NAME%3A%20%E7%85%AE%E9%BA%B5\nSERVINGS%3A%202\nINGREDIENTS%3A\n-%20%E9%BA%B5%20%7C%20200%20%7C%20g',
+    )
+    expect(draft.name).toBe('煮麵')
+    expect(draft.servings).toBe(2)
+    expect(draft.ingredients[0].name).toBe('麵')
+  })
+})
 
 describe('parseRecipeText', () => {
   it('解析完整的固定格式', () => {

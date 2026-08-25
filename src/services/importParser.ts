@@ -5,6 +5,23 @@ import { generateId } from '../db/recipeRepository'
 export const IMPORT_DRAFT_KEY = 'kakitsu-import-draft'
 
 /**
+ * 把 URL-encoded 文字解碼還原。
+ * 有些 App（例如 Gemini 手機版）複製結果時會輸出成 %20%E6… 形式。
+ * 只在偵測到 %XX 序列且能完整解碼時才處理；一般文字（如「5% 鹽水」）原樣回傳。
+ */
+export function tryDecodeUrlEncoded(text: string): string {
+  if (!/[%][0-9A-Fa-f]{2}/.test(text)) return text
+  try {
+    const decoded = decodeURIComponent(text)
+    // 解碼後仍殘留 %XX → 原本就是字面的 %，不處理
+    if (/[%][0-9A-Fa-f]{2}/.test(decoded)) return text
+    return decoded
+  } catch {
+    return text
+  }
+}
+
+/**
  * 固定匯入格式範本（也是 prompt 給 LLM 看的範例）。
  * 使用英文欄位名，減少 LLM 產出差異；但 parser 也相容中文欄位名。
  */
@@ -147,7 +164,10 @@ function parseStepLine(line: string): RecipeStep | null {
  * 解析不出名稱時拋出錯誤。
  */
 export function parseRecipeText(text: string): RecipeDraft {
-  const lines = text
+  // 兜底：若內容是 URL-encoded（例如從手機 App 複製），先解碼
+  const decoded = tryDecodeUrlEncoded(text)
+
+  const lines = decoded
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l && !/^```/.test(l))
