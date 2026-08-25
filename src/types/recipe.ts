@@ -24,6 +24,8 @@ export interface Recipe {
   tags: string[]
   /** 壓縮後的圖片 data URL 或 Blob URL */
   image?: string
+  /** 食譜來源，例如 YouTube 影片網址 */
+  reference?: string
   notes?: string
   favorite?: boolean
   createdAt: string

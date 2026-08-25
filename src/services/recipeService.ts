@@ -18,6 +18,7 @@ export function buildRecipe(draft: RecipeDraft): Recipe {
     steps: draft.steps,
     tags: [...new Set(draft.tags.map((t) => t.trim()).filter(Boolean))],
     image: draft.image,
+    reference: draft.reference?.trim() || undefined,
     notes: draft.notes?.trim() || undefined,
     favorite: draft.favorite ?? false,
     createdAt: draft.createdAt ?? timestamp,

@@ -105,6 +105,7 @@ export function RecipeForm({
       name: draft.name.trim(),
       description: draft.description?.trim() || undefined,
       notes: draft.notes?.trim() || undefined,
+      reference: draft.reference?.trim() || undefined,
       ingredients: draft.ingredients.filter(
         (i) => i.name.trim() && (i.amount !== 0 || i.unit),
       ),
@@ -356,6 +357,17 @@ export function RecipeForm({
             新增
           </Button>
         </div>
+      </div>
+
+      {/* 來源 */}
+      <div>
+        <SectionTitle>來源</SectionTitle>
+        <TextInput
+          type="url"
+          value={draft.reference ?? ''}
+          onChange={(e) => set('reference', e.target.value)}
+          placeholder="YouTube 或其他來源網址（選填）"
+        />
       </div>
 
       {/* 備註 */}

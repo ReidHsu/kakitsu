@@ -156,6 +156,16 @@ export function RecipeDetailPage() {
       {recipe.description ? (
         <p className="mb-2 text-gray-600 dark:text-gray-300">{recipe.description}</p>
       ) : null}
+      {recipe.reference ? (
+        <a
+          href={recipe.reference}
+          target="_blank"
+          rel="noreferrer"
+          className="mb-4 inline-flex max-w-full items-center gap-1 break-all text-sm text-green-700 underline dark:text-green-400"
+        >
+          🎬 查看來源
+        </a>
+      ) : null}
       {recipe.tags.length > 0 ? (
         <div className="mb-4 flex flex-wrap gap-1.5">
           {recipe.tags.map((tag) => (

@@ -105,6 +105,7 @@ function sanitizeRecipe(raw: unknown): Recipe | null {
     steps,
     tags,
     image: typeof raw.image === 'string' ? raw.image : undefined,
+    reference: typeof raw.reference === 'string' ? raw.reference : undefined,
     notes: typeof raw.notes === 'string' ? raw.notes : undefined,
     favorite: raw.favorite === true,
     createdAt:

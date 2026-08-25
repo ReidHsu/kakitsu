@@ -8,11 +8,12 @@ import type { Ingredient, Recipe } from '../types/recipe'
  * 格式與 importParser 相容：使用不含冒號的安全格式，避免 iOS 將 NAME: 誤判為 URL scheme。
  *   [KAKITSU_RECIPE] / NAME = / INGREDIENTS / STEPS / NOTES
  */
-export function toImportFormat(recipe: Pick<Recipe, 'name' | 'description' | 'servings' | 'ingredients' | 'steps' | 'tags' | 'notes'>): string {
+export function toImportFormat(recipe: Pick<Recipe, 'name' | 'description' | 'reference' | 'servings' | 'ingredients' | 'steps' | 'tags' | 'notes'>): string {
   const lines: string[] = []
   lines.push('[KAKITSU_RECIPE]')
   lines.push(`NAME = ${recipe.name}`)
   if (recipe.description) lines.push(`DESCRIPTION = ${recipe.description}`)
+  if (recipe.reference) lines.push(`REFERENCE = ${recipe.reference}`)
   lines.push(`SERVINGS = ${recipe.servings}`)
   if (recipe.tags.length > 0) lines.push(`TAGS = ${recipe.tags.join(', ')}`)
 

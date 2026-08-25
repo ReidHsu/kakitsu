@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildGenericPrompt, parseRecipeText, tryDecodeUrlEncoded } from './importParser'
+import { buildGenericPrompt, buildImportPrompt, parseRecipeText, tryDecodeUrlEncoded } from './importParser'
 
 describe('tryDecodeUrlEncoded', () => {
   it('解碼 URL-encoded 內容', () => {
@@ -30,6 +30,7 @@ describe('parseRecipeText', () => {
     const text = `[KAKITSU_RECIPE]
 NAME = 番茄義大利麵
 DESCRIPTION = 經典家常麵
+REFERENCE = https://www.youtube.com/watch?v=abc123
 SERVINGS = 2
 TAGS = 義大利, 快速
 
@@ -47,6 +48,7 @@ TAGS = 義大利, 快速
     const draft = parseRecipeText(text)
     expect(draft.name).toBe('番茄義大利麵')
     expect(draft.description).toBe('經典家常麵')
+    expect(draft.reference).toBe('https://www.youtube.com/watch?v=abc123')
     expect(draft.servings).toBe(2)
     expect(draft.tags).toEqual(['義大利', '快速'])
     expect(draft.ingredients).toHaveLength(3)
@@ -63,6 +65,12 @@ TAGS = 義大利, 快速
     const draft = parseRecipeText('NAME: 舊格式\nSERVINGS: 2\nINGREDIENTS:\n- 麵 | 100 | g')
     expect(draft.name).toBe('舊格式')
     expect(draft.ingredients[0].name).toBe('麵')
+  })
+
+  it('解析 YouTube prompt 會提醒模型保留來源', () => {
+    const prompt = buildImportPrompt('https://youtu.be/abc123')
+    expect(prompt).toContain('YouTube')
+    expect(prompt).toContain('REFERENCE =')
   })
 
   it('相容中文欄位名與「食材：」內文形式', () => {

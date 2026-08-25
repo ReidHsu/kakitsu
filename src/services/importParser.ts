@@ -48,6 +48,7 @@ function unwrapTransportQuotes(text: string): string {
 export const IMPORT_FORMAT_TEMPLATE = `[KAKITSU_RECIPE]
 NAME = 食譜名稱
 DESCRIPTION = 一句話描述
+REFERENCE = https://www.youtube.com/watch?v=...
 SERVINGS = 2
 TAGS = 標籤1, 標籤2
 
@@ -72,7 +73,9 @@ ${IMPORT_FORMAT_TEMPLATE}
 
 規則：
 - NAME 必填，使用「欄位 = 內容」，不要使用冒號。
+- REFERENCE 若來源是 YouTube 或其他網頁，填入完整網址；沒有來源就省略該行。
 - DESCRIPTION、SERVINGS、TAGS 沒有資料就省略該行。
+- 如果我提供 YouTube 網址，請分析影片內容、字幕或影片描述中的食譜資訊；無法確認的份量不要自行捏造，請放到 NOTES 說明。
 - INGREDIENTS 每行是「食材名稱 | 份量 | 單位」。份量用數字；單位用 g、kg、ml、l、tbsp、tsp、杯、顆、瓣、根、片、塊、條、包、個、隻 等，真的沒有單位就留空。
 - SERVINGS 要是整數，食材份量要對應到這個份量。
 - STEPS 用數字編號，每行一個步驟。
@@ -86,12 +89,17 @@ export function buildGenericPrompt(): string {
 
 /** 內嵌目前要轉換內容的一次性 prompt */
 export function buildImportPrompt(userInput: string): string {
-  return `${GENERIC_PROMPT}\n\n要轉換的內容：\n---\n${userInput}\n---`
+  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(userInput)
+  const sourceHint = isYouTube
+    ? '\n\n這是一個 YouTube 來源。請先分析影片中的食譜內容（字幕、影片描述或你能取得的資訊），並把原始網址放在 REFERENCE = 欄位。'
+    : ''
+  return `${GENERIC_PROMPT}${sourceHint}\n\n要轉換的內容：\n---\n${userInput}\n---`
 }
 
 /** 中文 / 英文欄位別名 → 正規 key */
 const SECTION_ALIASES: Record<string, string[]> = {
   NAME: ['name', '名稱', '名字', '菜名', '食譜名稱'],
+  REFERENCE: ['reference', '來源', '參考資料', '參考連結', '影片來源', '影片連結'],
   DESCRIPTION: ['description', '描述', '簡介'],
   SERVINGS: ['servings', '份量', '幾人份', '人數'],
   TAGS: ['tags', '標籤'],
@@ -256,6 +264,9 @@ export function parseRecipeText(text: string): RecipeDraft {
           break
         case 'DESCRIPTION':
           draft.description = cls.value
+          break
+        case 'REFERENCE':
+          draft.reference = cls.value
           break
         case 'SERVINGS': {
           const n = parseFloat(cls.value)
