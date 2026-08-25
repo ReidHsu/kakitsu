@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light dark;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  /* 避免 iOS Safari 觸發 pull-to-refresh 與 overscroll 干擾 */
+  overscroll-behavior-y: none;
+}
+
+/* iPhone Home Indicator 安全區域 */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* 讓點擊區域在行動裝置上更明確 */
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
