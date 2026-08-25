@@ -10,15 +10,35 @@ export const IMPORT_DRAFT_KEY = 'kakitsu-import-draft'
  * 只在偵測到 %XX 序列且能完整解碼時才處理；一般文字（如「5% 鹽水」）原樣回傳。
  */
 export function tryDecodeUrlEncoded(text: string): string {
-  if (!/[%][0-9A-Fa-f]{2}/.test(text)) return text
-  try {
-    const decoded = decodeURIComponent(text)
-    // 解碼後仍殘留 %XX → 原本就是字面的 %，不處理
-    if (/[%][0-9A-Fa-f]{2}/.test(decoded)) return text
-    return decoded
-  } catch {
-    return text
+  let current = text
+
+  // 有些手機 / LLM 會重複包一層 URL encoding，最多解兩層即可避免誤解碼。
+  for (let i = 0; i < 2; i += 1) {
+    if (!/[%][0-9A-Fa-f]{2}/.test(current)) break
+    try {
+      // URL form encoding 也可能用 + 表示空白。
+      const decoded = decodeURIComponent(current.replace(/\+/g, ' '))
+      if (decoded === current) break
+      current = decoded
+    } catch {
+      // 內容含有不完整的 % 序列時，不要讓整段貼上失敗。
+      break
+    }
   }
+
+  return current
+}
+
+/** 移除 Gemini / 其他 App 可能加上的三引號字串包裝。 */
+function unwrapTransportQuotes(text: string): string {
+  const trimmed = text.trim()
+  if (
+    (trimmed.startsWith('"""') && trimmed.endsWith('"""')) ||
+    (trimmed.startsWith("'''") && trimmed.endsWith("'''"))
+  ) {
+    return trimmed.slice(3, -3).trim()
+  }
+  return trimmed
 }
 
 /**
@@ -165,9 +185,11 @@ function parseStepLine(line: string): RecipeStep | null {
  */
 export function parseRecipeText(text: string): RecipeDraft {
   // 兜底：若內容是 URL-encoded（例如從手機 App 複製），先解碼
-  const decoded = tryDecodeUrlEncoded(text)
+  const decoded = tryDecodeUrlEncoded(unwrapTransportQuotes(text))
+  // 某些傳輸層會把換行也編碼成字面「\\n」
+  const normalized = decoded.replace(/\\r/g, '').replace(/\\n/g, '\n')
 
-  const lines = decoded
+  const lines = normalized
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter((l) => l && !/^```/.test(l))

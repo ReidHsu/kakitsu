@@ -8,12 +8,16 @@ describe('tryDecodeUrlEncoded', () => {
   it('一般文字原樣回傳（含字面 % 百分比）', () => {
     expect(tryDecodeUrlEncoded('5% 的鹽水')).toBe('5% 的鹽水')
   })
-  it('解碼失敗時原樣回傳', () => {
+  it('支援重複 URL encoding 與加號空白', () => {
+    expect(tryDecodeUrlEncoded('name%253A%2520%25E6%258F%2580%25E9%25BA%25B5')).toBe('name: 揀麵')
+    expect(tryDecodeUrlEncoded('name%3A+%E6%8F%80%E9%BA%B5')).toBe('name: 揀麵')
+  })
+  it('解碼失敗時保留原文', () => {
     expect(tryDecodeUrlEncoded('100%zz')).toBe('100%zz')
   })
-  it('parseRecipeText 自動解碼 URL-encoded 的食譜', () => {
+  it('parseRecipeText 自動解碼 URL-encoded 的食譜與三引號包裝', () => {
     const draft = parseRecipeText(
-      'NAME%3A%20%E7%85%AE%E9%BA%B5\nSERVINGS%3A%202\nINGREDIENTS%3A\n-%20%E9%BA%B5%20%7C%20200%20%7C%20g',
+      '"""name%253A%2520%E7%85%AE%E9%BA%B5%5Cnservings%253A%25202%5Cningredients%253A%5Cn-%2520%E9%BA%B5%2520%257C%2520200%2520%257C%2520g"""',
     )
     expect(draft.name).toBe('煮麵')
     expect(draft.servings).toBe(2)
