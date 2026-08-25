@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { RecipeList } from '../components/RecipeList'
 import { TextInput } from '../components/ui'
 import { db } from '../db/database'
@@ -26,14 +27,24 @@ export function RecipeListPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           🍳 My Recipes
         </h1>
-        <button
-          type="button"
-          aria-label={dark ? '切換到淺色模式' : '切換到深色模式'}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-          onClick={toggleDark}
-        >
-          {dark ? '☀️' : '🌙'}
-        </button>
+        <div className="flex items-center gap-1">
+          <Link
+            to="/recipe/import"
+            aria-label="用 AI 匯入食譜"
+            title="用 AI 匯入食譜"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            🤖
+          </Link>
+          <button
+            type="button"
+            aria-label={dark ? '切換到淺色模式' : '切換到深色模式'}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-xl text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            onClick={toggleDark}
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
 
       <div className="mb-4">

@@ -3,6 +3,7 @@ import { RecipeListPage } from './pages/RecipeListPage'
 import { RecipeDetailPage } from './pages/RecipeDetailPage'
 import { RecipeCreatePage } from './pages/RecipeCreatePage'
 import { RecipeEditPage } from './pages/RecipeEditPage'
+import { RecipeImportPage } from './pages/RecipeImportPage'
 import { SettingsPage } from './pages/SettingsPage'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -45,6 +46,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<RecipeListPage />} />
           <Route path="/recipe/new" element={<RecipeCreatePage />} />
+          <Route path="/recipe/import" element={<RecipeImportPage />} />
           <Route path="/recipe/:id" element={<RecipeDetailPage />} />
           <Route path="/recipe/:id/edit" element={<RecipeEditPage />} />
           <Route path="/settings" element={<SettingsPage />} />

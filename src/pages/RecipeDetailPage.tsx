@@ -5,7 +5,31 @@ import { ServingSelector } from '../components/ServingSelector'
 import { Button, EmptyState, IconButton, SectionTitle, Tag } from '../components/ui'
 import { db } from '../db/database'
 import * as recipeService from '../services/recipeService'
+import { toImportFormat } from '../services/exportFormat'
 import { formatAmount, scaleIngredient } from '../utils/ingredientCalculator'
+
+async function clipboardCopy(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 用 Web Share API 分享食譜文字；不支援時複製到剪貼簿 */
+async function shareRecipe(recipe: { name: string; description?: string }): Promise<void> {
+  const text = `【${recipe.name}】${recipe.description ? ` ${recipe.description}` : ''}`
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: recipe.name, text })
+      return
+    } catch {
+      /* 使用者取消分享 → 退回剪貼簿 */
+    }
+  }
+  await clipboardCopy(text)
+}
 
 export function RecipeDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -68,6 +92,17 @@ export function RecipeDetailPage() {
           ←
         </Link>
         <div className="flex items-center gap-1">
+          <IconButton aria-label="分享食譜" onClick={() => shareRecipe(recipe)}>
+            🔗
+          </IconButton>
+          <IconButton
+            aria-label="複製為可匯入格式"
+            onClick={async () => {
+              await clipboardCopy(toImportFormat(recipe))
+            }}
+          >
+            📋
+          </IconButton>
           <IconButton
             aria-label={recipe.favorite ? '取消最愛' : '設為最愛'}
             onClick={async () => {
